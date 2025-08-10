@@ -1,0 +1,12 @@
+{
+  "name": "ml-term-deposit-app",
+  "version": "1.0.0",
+  "description": "ML Term Deposit Prediction Streamlit App",
+  "main": "app.py",
+  "scripts": {
+    "start": "python -m streamlit run app.py --server.port 8501 --server.address 0.0.0.0",
+    "dev": "python -m streamlit run app.py --server.port 8501 --server.address 0.0.0.0"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}
