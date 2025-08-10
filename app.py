@@ -8,59 +8,19 @@ import base64
 from typing import Dict, List, Tuple, Optional
 
 import os
-# Set JAVA_HOME for H2O - try multiple common paths
-java_paths = [
-    "/usr/lib/jvm/java-17-openjdk-amd64",
-    "/usr/lib/jvm/java-11-openjdk-amd64", 
-    "/usr/lib/jvm/default-java",
-    "/opt/java/openjdk"
-]
+os.environ["JAVA_HOME"] = "/usr/lib/jvm/java-17-openjdk-amd64"
 
-for java_path in java_paths:
-    if os.path.exists(java_path):
-        os.environ["JAVA_HOME"] = java_path
-        break
-else:
-    # If no Java found, we'll handle this gracefully
-    pass
-
-# Try to import H2O, but handle gracefully if it fails
-try:
-    import h2o
-    from h2o.frame import H2OFrame
-    H2O_AVAILABLE = True
-    # Initialize H2O with error handling
-    try:
-        h2o.init(nthreads=-1, max_mem_size="2G")
-    except Exception as e:
-        st.error(f"H2O initialization failed: {e}")
-        H2O_AVAILABLE = False
-except ImportError as e:
-    H2O_AVAILABLE = False
-    st.warning("H2O not available. Using demo mode with mock predictions.")
+import h2o
+h2o.init()
+from h2o.frame import H2OFrame
 
 MODEL_PATH = "saved_model/StackedEnsemble_AllModels_1_AutoML_1_20250807_154043"
 
 def _init_h2o_and_load_model(model_path: str):
-    """Initialize H2O and load model with error handling"""
-    if not H2O_AVAILABLE:
-        return None
-    
-    try:
-        # Check if model file exists
-        if not os.path.exists(model_path):
-            st.warning(f"Model file not found at {model_path}. Using demo mode.")
-            return None
-        
-        # Initialize H2O (cached so it runs once per session)
-        if not h2o.cluster().is_running():
-            h2o.init(nthreads=-1, max_mem_size="2G")
-        
-        model = h2o.load_model(model_path)
-        return model
-    except Exception as e:
-        st.error(f"Failed to load H2O model: {e}")
-        return None
+    # Initialize H2O (cached so it runs once per session)
+    h2o.init()
+    model = h2o.load_model(model_path)
+    return model
 
 
 
@@ -322,102 +282,10 @@ def load_css():
         color: white;
     }
     
-    /* Sidebar Toggle Button */
-    .sidebar-toggle {
-        position: fixed;
-        top: 20px;
-        left: 10px;
-        z-index: 999999;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border: none;
-        border-radius: 8px;
-        padding: 8px 12px;
-        cursor: pointer;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        transition: all 0.3s ease;
-        display: none;
-        color: white;
-        font-size: 16px;
-        font-weight: bold;
-    }
-    
-    .sidebar-toggle:hover {
-        transform: translateX(2px);
-        box-shadow: 0 6px 16px rgba(0,0,0,0.2);
-        background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
-    }
-    
-    .sidebar-toggle.show {
-        display: block;
-        animation: slideIn 0.3s ease-out;
-    }
-    
-    @keyframes slideIn {
-        from {
-            opacity: 0;
-            transform: translateX(-20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateX(0);
-        }
-    }
-    
     /* Hide Streamlit Branding */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
-    
-    <script>
-    // Sidebar toggle functionality
-    function initSidebarToggle() {
-        // Create toggle button
-        const toggleBtn = document.createElement('button');
-        toggleBtn.className = 'sidebar-toggle';
-        toggleBtn.innerHTML = '&raquo;&raquo;';
-        toggleBtn.title = 'Show Sidebar';
-        document.body.appendChild(toggleBtn);
-        
-        // Function to check sidebar visibility
-        function checkSidebarVisibility() {
-            const sidebar = document.querySelector('[data-testid="stSidebar"]');
-            const sidebarCollapsed = document.querySelector('[data-testid="collapsedControl"]');
-            
-            if (sidebarCollapsed && sidebarCollapsed.style.display !== 'none') {
-                toggleBtn.classList.add('show');
-            } else {
-                toggleBtn.classList.remove('show');
-            }
-        }
-        
-        // Toggle sidebar function
-        toggleBtn.addEventListener('click', function() {
-            const collapseBtn = document.querySelector('[data-testid="collapsedControl"]');
-            if (collapseBtn) {
-                collapseBtn.click();
-            }
-        });
-        
-        // Monitor sidebar state
-        const observer = new MutationObserver(checkSidebarVisibility);
-        observer.observe(document.body, {
-            childList: true,
-            subtree: true,
-            attributes: true,
-            attributeFilter: ['style', 'class']
-        });
-        
-        // Initial check
-        setTimeout(checkSidebarVisibility, 100);
-    }
-    
-    // Initialize when page loads
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initSidebarToggle);
-    } else {
-        initSidebarToggle();
-    }
-    </script>
     </style>
     """, unsafe_allow_html=True)
 
@@ -538,77 +406,26 @@ def get_csv_download_link(df: pd.DataFrame, filename: str) -> str:
 # TODO: Replace these functions with your actual ML model
 def predict_single(customer_data: Dict) -> Tuple[str, float]:
     """
-    Uses the H2O AutoML model to predict a single record, with fallback to demo mode.
+    Uses the cached H2O AutoML model to predict a single record.
     Returns ('Yes' or 'No', confidence in %).
     """
-    if H2O_AVAILABLE:
-        try:
-            model = _init_h2o_and_load_model(MODEL_PATH)
-            if model is not None:
-                df = pd.DataFrame([customer_data])
-                results = _predict_h2o(df, model)
-                return results.loc[0, "prediction"], float(results.loc[0, "confidence"])
-        except Exception as e:
-            st.warning(f"H2O prediction failed: {e}. Using demo mode.")
-    
-    # Fallback to demo prediction logic
-    import random
-    random.seed(hash(str(customer_data)) % 2147483647)  # Deterministic based on input
-    
-    # Simple heuristic for demo purposes
-    score = 0
-    if customer_data.get('age', 0) > 30: score += 1
-    if customer_data.get('balance', 0) > 1000: score += 1
-    if customer_data.get('education') == 'tertiary': score += 1
-    if customer_data.get('housing') == 'no': score += 1
-    if customer_data.get('loan') == 'no': score += 1
-    if customer_data.get('duration', 0) > 300: score += 2
-    
-    # Add some randomness
-    score += random.randint(-1, 2)
-    
-    prediction = "Yes" if score >= 3 else "No"
-    confidence = min(95, max(55, 60 + score * 8 + random.randint(-10, 10)))
-    
-    return prediction, float(confidence)
+    model = _init_h2o_and_load_model(MODEL_PATH)
+    df = pd.DataFrame([customer_data])
+    results = _predict_h2o(df, model)
+    return results.loc[0, "prediction"], float(results.loc[0, "confidence"])
 
 def predict_batch(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Uses the H2O AutoML model to predict a batch of records, with fallback to demo mode.
+    Uses the cached H2O AutoML model to predict a batch of records.
     Returns the original df with 'prediction' and 'confidence' columns.
     """
-    if H2O_AVAILABLE:
-        try:
-            model = _init_h2o_and_load_model(MODEL_PATH)
-            if model is not None:
-                results = _predict_h2o(df, model)
-                return results
-        except Exception as e:
-            st.warning(f"H2O batch prediction failed: {e}. Using demo mode.")
-    
-    # Fallback to demo prediction logic
-    results = df.copy()
-    predictions = []
-    confidences = []
-    
-    for _, row in df.iterrows():
-        customer_data = row.to_dict()
-        pred, conf = predict_single(customer_data)
-        predictions.append(pred)
-        confidences.append(conf)
-    
-    results['prediction'] = predictions
-    results['confidence'] = confidences
+    model = _init_h2o_and_load_model(MODEL_PATH)
+    results = _predict_h2o(df, model)
     return results
 
 # Main Application
 def main():
     load_css()
-    
-    # Show system status
-    if not H2O_AVAILABLE:
-        st.info("🔧 Running in demo mode. H2O AutoML model not available.")
-    
     render_header()
     
     # Sidebar Navigation
