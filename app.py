@@ -322,10 +322,102 @@ def load_css():
         color: white;
     }
     
+    /* Sidebar Toggle Button */
+    .sidebar-toggle {
+        position: fixed;
+        top: 20px;
+        left: 10px;
+        z-index: 999999;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 8px;
+        padding: 8px 12px;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        transition: all 0.3s ease;
+        display: none;
+        color: white;
+        font-size: 16px;
+        font-weight: bold;
+    }
+    
+    .sidebar-toggle:hover {
+        transform: translateX(2px);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+        background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+    }
+    
+    .sidebar-toggle.show {
+        display: block;
+        animation: slideIn 0.3s ease-out;
+    }
+    
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateX(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    
     /* Hide Streamlit Branding */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
+    
+    <script>
+    // Sidebar toggle functionality
+    function initSidebarToggle() {
+        // Create toggle button
+        const toggleBtn = document.createElement('button');
+        toggleBtn.className = 'sidebar-toggle';
+        toggleBtn.innerHTML = '&raquo;&raquo;';
+        toggleBtn.title = 'Show Sidebar';
+        document.body.appendChild(toggleBtn);
+        
+        // Function to check sidebar visibility
+        function checkSidebarVisibility() {
+            const sidebar = document.querySelector('[data-testid="stSidebar"]');
+            const sidebarCollapsed = document.querySelector('[data-testid="collapsedControl"]');
+            
+            if (sidebarCollapsed && sidebarCollapsed.style.display !== 'none') {
+                toggleBtn.classList.add('show');
+            } else {
+                toggleBtn.classList.remove('show');
+            }
+        }
+        
+        // Toggle sidebar function
+        toggleBtn.addEventListener('click', function() {
+            const collapseBtn = document.querySelector('[data-testid="collapsedControl"]');
+            if (collapseBtn) {
+                collapseBtn.click();
+            }
+        });
+        
+        // Monitor sidebar state
+        const observer = new MutationObserver(checkSidebarVisibility);
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: ['style', 'class']
+        });
+        
+        // Initial check
+        setTimeout(checkSidebarVisibility, 100);
+    }
+    
+    // Initialize when page loads
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initSidebarToggle);
+    } else {
+        initSidebarToggle();
+    }
+    </script>
     </style>
     """, unsafe_allow_html=True)
 
