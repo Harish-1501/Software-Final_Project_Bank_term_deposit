@@ -6,7 +6,12 @@ from plotly.subplots import make_subplots
 import io
 import base64
 from typing import Dict, List, Tuple, Optional
+
+import os
+os.environ["JAVA_HOME"] = "/usr/lib/jvm/java-17-openjdk-amd64"
+
 import h2o
+h2o.init()
 from h2o.frame import H2OFrame
 
 MODEL_PATH = "saved_model/StackedEnsemble_AllModels_1_AutoML_1_20250807_154043"
@@ -17,64 +22,7 @@ def _init_h2o_and_load_model(model_path: str):
     model = h2o.load_model(model_path)
     return model
 
-# def _predict_h2o(df: pd.DataFrame, model, response_positive: str = "yes") -> pd.DataFrame:
-#     """
-#     Runs H2O predictions on a pandas DataFrame and returns a DataFrame
-#     containing:
-#       - original columns
-#       - 'prediction' (Yes/No)
-#       - 'confidence' (probability % of positive class)
-#     """
-#     from h2o import H2OFrame
 
-#     # Convert pandas → H2O
-#     hf = H2OFrame(df)
-
-#     # Run prediction
-#     raw_preds = model.predict(hf).as_data_frame()  # typically ['predict', 'no', 'yes']
-
-#     # Identify positive class probability column
-#     pos_prob = None
-#     try:
-#         classes = model._model_json["output"]["domains"][-1] or []
-#         classes_lower = [str(c).lower() for c in classes]
-#         if response_positive.lower() in classes_lower:
-#             pos_index = classes_lower.index(response_positive.lower())
-#             candidate = f"p{pos_index}"
-#             if candidate in raw_preds.columns:
-#                 pos_prob = raw_preds[candidate]
-#     except Exception:
-#         pass
-
-#     # Fallback: assume 'p1' is positive class if unknown
-#     if pos_prob is None:
-#         prob_cols = [c for c in raw_preds.columns if c.startswith("p")]
-#         pos_prob = raw_preds["p1"] if "p1" in raw_preds.columns else raw_preds[prob_cols[-1]]
-
-#     # Normalize prediction labels for UI
-#     def _normalize_label(label: str) -> str:
-#         l = str(label).strip().lower()
-#         if l in ["yes", "y", "true", "1"]:
-#             return "Yes"
-#         elif l in ["no", "n", "false", "0"]:
-#             return "No"
-#         return "Yes" if l == response_positive.lower() else "No"
-
-#     # Ensure 'predict' column exists (use probability threshold 0.5 if missing)
-#     if "predict" not in raw_preds.columns:
-#         raw_preds["predict"] = (pos_prob >= 0.5).map({True: "yes", False: "no"})
-
-#     preds_norm = raw_preds["predict"].apply(_normalize_label)
-
-#     # Calculate confidence percentage from probability
-#     conf_pct = (pos_prob.astype(float) * 100).round(2)
-
-#     # Combine with original DataFrame
-#     output_df = df.copy()
-#     output_df["prediction"] = preds_norm
-#     output_df["confidence"] = conf_pct
-
-#     return output_df
 
 def _predict_h2o(df: pd.DataFrame, model, ui_yes_label: str = "Yes") -> pd.DataFrame:
     """
