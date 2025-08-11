@@ -4,6 +4,13 @@ https://harish-1501-software-final-project-bank-term-deposit-app-0kfkov.streamli
 Note : If Deployment in local machine , install the Java JDK in local environment.
 PS : Testing is done using 1% of the actual Test data, code for data split is available in resource file.
 
+# Dataset Details
+* *Dataset Size:* Approximately 45,000 customer records, providing a robust sample size for training machine learning models.
+* *Features:* Mix of categorical and numerical variables including age, job type, marital status, account balance, contact communication type, campaign duration, and others.
+* *Target Variable:* Binary classification — whether the customer subscribed to a term deposit (yes or no).
+* *Source:* Publicly available from the UCI Machine Learning Repository and Kaggle.
+Dataset Link : https://www.kaggle.com/datasets/janiobachmann/bank-marketing-dataset
+
 # ML Term Deposit Prediction App
 
 A beautiful Streamlit application for predicting term deposit subscriptions using machine learning.
