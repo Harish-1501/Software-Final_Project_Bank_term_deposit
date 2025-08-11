@@ -1,15 +1,8 @@
-<<<<<<< HEAD
 **StreamLit Deployment Link :**
 https://harish-1501-software-final-project-bank-term-deposit-app-0kfkov.streamlit.app/
 
 Note : If Deployment in local machine , install the Java JDK in local environment.
 PS : Testing is done using 1% of the actual Test data, code for data split is available in resource file.
-=======
-StreamLit Deployment Link : https://harish-1501-software-final-project-bank-term-deposit-app-0kfkov.streamlit.app/
-
-Note : If Deployment in local machine , install the Java JDK in local environment. PS : Testing is done using 1% of the actual Test data, code for data split is available in resource file.
-
->>>>>>> c7dd5dd944303fb8c25855a98a20361f78e61c26
 
 # ML Term Deposit Prediction App
 
