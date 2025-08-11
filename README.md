@@ -1,9 +1,3 @@
-**StreamLit Deployment Link :**
-https://harish-1501-software-final-project-bank-term-deposit-app-0kfkov.streamlit.app/
-
-Note : If Deployment in local machine , install the Java JDK in local environment.
-PS : Testing is done using 1% of the actual Test data, code for data split is available in resource file.
-
 # ML Term Deposit Prediction App
 
 A beautiful Streamlit application for predicting term deposit subscriptions using machine learning.
